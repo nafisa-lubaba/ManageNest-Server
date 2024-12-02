@@ -33,11 +33,28 @@ async function run() {
     const apartmentsCollection = client.db('manageNest').collection('apartments')
 
 
-    app.get('/apartmentss', async (req, res) => {
+    app.get('/apartments', async (req, res) => {
       const result = await apartmentsCollection.find().toArray();
       res.send(result);
 
     });
+    app.get('/apartments/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await apartmentsCollection.findOne(query);
+      res.send(result);
+  });
+  app.put('/apartments/:id', async (req, res) => {
+    const id = req.params.id;
+    const updatedData = req.body;
+    const query = { _id: new ObjectId(id) };
+    const update = { $set: updatedData };
+    const result = await apartmentsCollection.updateOne(query, update);
+    res.send(result);
+});
+
+
+  
     // Connect the client to the server	(optional starting in v4.7)
     // 
     
