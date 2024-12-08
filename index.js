@@ -3,6 +3,8 @@ const app = express()
 require('dotenv').config()
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000
 
 const corsOptions = {
@@ -17,7 +19,7 @@ app.use(express.json());
 
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nrsyrpr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://ManageNest:dICkfx0ZRov3mN8K@cluster0.nrsyrpr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -32,6 +34,9 @@ async function run() {
   try {
     const apartmentsCollection = client.db('manageNest').collection('apartments')
     const userCollection = client.db('manageNest').collection('users');
+    const bookedApparmentCollection = client.db('manageNest').collection('bookedApparments');
+    const announcementCollection = client.db('manageNest').collection('announcements');
+    const cuponCollection = client.db('manageNest').collection('cupons');
 
 
     app.get('/apartments', async (req, res) => {
@@ -93,6 +98,111 @@ async function run() {
       }
       res.send({ member });
     })
+    app.post('/bookedAppartment', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await bookedApparmentCollection.insertOne(newProduct)
+      res.send(result)
+    })
+
+    app.post('/newAnnouncement', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await announcementCollection.insertOne(newProduct)
+      res.send(result)
+    })
+    app.get('/announcements', async (req, res) => {
+      const result = await announcementCollection.find().toArray();
+      res.send(result);
+    });
+    app.get('/cupons', async (req, res) => {
+      const result = await cuponCollection.find().toArray();
+      res.send(result);
+    });
+    app.post('/newCupons', async (req, res) => {
+      const newCupon = req.body;
+      console.log(newCupon);
+      const result = await cuponCollection.insertOne(newCupon)
+      res.send(result)
+    })
+    app.get('/bookingApartments/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await bookedApparmentCollection.find({ ownerEmail: email }).toArray();
+      res.status(200).json(result);
+    });
+    app.get('/acceptedApartments/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await bookedApparmentCollection.find({ userEmail: email }).toArray();
+      res.status(200).json(result);
+    });
+    app.get('/coupons/:code', async (req, res) => {
+      try {
+        const couponCode = req.params.code;
+        const coupon = await cuponCollection.findOne({ code: couponCode });
+    
+        if (coupon) {
+          res.send({
+            isValid: true,
+            discountPercentage: coupon.discountPercentage
+          });
+        } else {
+          res.send({
+            isValid: false,
+            discountPercentage: 0
+          });
+        }
+      } catch (error) {
+        res.status(500).send({
+          isValid: false,
+          message: 'Error validating coupon'
+        });
+      }
+    });
+    app.put('/updateUserRole/:email', async (req, res) => {
+      const userEmail = req.params.email;
+      const { role } = req.body;
+      const result = await userCollection.updateOne(
+        { email: userEmail },
+        { $set: { role } }
+      );
+      res.send(result)
+    });
+    app.put('/updateRequestStatus/:id', async (req, res) => {
+      const requestId = req.params.id;
+      const { status } = req.body;
+      const result = await bookedApparmentCollection.updateOne(
+        { _id: new ObjectId(requestId) },
+        { $set: { status } }
+      );
+      res.send(result)
+    });
+    app.delete('/deleteRequest/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await bookedApparmentCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result)
+    });
+    app.get('/manageMembers', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+      // payment intent
+      app.post('/create-payment-intent', async (req, res) => {
+        const { price } = req.body;
+        const amount = parseInt(price * 100);
+        console.log(amount, 'amount inside the intent')
+  
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: 'usd',
+          payment_method_types: ['card']
+        });
+  
+        res.send({
+          clientSecret: paymentIntent.client_secret
+        })
+      });
+
+
 
 
 
