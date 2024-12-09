@@ -139,7 +139,7 @@ async function run() {
       try {
         const couponCode = req.params.code;
         const coupon = await cuponCollection.findOne({ code: couponCode });
-    
+
         if (coupon) {
           res.send({
             isValid: true,
@@ -185,22 +185,23 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
-      // payment intent
-      app.post('/create-payment-intent', async (req, res) => {
-        const { price } = req.body;
-        const amount = parseInt(price * 100);
-        console.log(amount, 'amount inside the intent')
-  
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: amount,
-          currency: 'usd',
-          payment_method_types: ['card']
-        });
-  
-        res.send({
-          clientSecret: paymentIntent.client_secret
-        })
+    // payment intent
+    
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(amount, 'amount inside the intent')
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
       });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
 
 
 
