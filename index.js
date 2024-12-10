@@ -426,6 +426,15 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
+    app.put('/updateAppartmentStatus/:id', async (req, res) => {
+      const appartmentId  = req.params.id;
+      const { status } = req.body;
+      const result = await apartmentsCollection.updateOne(
+        { _id: new ObjectId(appartmentId ) },
+        { $set: { status } }
+      );
+      res.send(result)
+    });
     // payment intent
 
     app.post('/create-payment-intent', async (req, res) => {
