@@ -239,7 +239,10 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000
 
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174',],
+  origin: ['http://localhost:5173', 'http://localhost:5174',
+    'https://managenest.netlify.app'
+
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -250,7 +253,7 @@ app.use(express.json());
 
 
 
-const uri = `mongodb+srv://ManageNest:dICkfx0ZRov3mN8K@cluster0.nrsyrpr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nrsyrpr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
